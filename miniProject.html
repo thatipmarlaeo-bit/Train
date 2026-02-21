@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Train Linked List</title>
+    <style>
+        :root {
+            --primary: #2c3e50;
+            --secondary: #e67e22;
+            --bg-color: #f4f7f6;
+            --text-color: #333;
+            --coupler-color-1: #546e7a; 
+            --coupler-color-2: #455a64;
+            /* รางรถไฟ */
+            --track-bg: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='12' viewBox='0 0 40 12'%3E%3C!-- ไม้หมอน --%3E%3Cpath fill='%23bdc3c7' d='M5 0h6v12H5zm20 0h6v12h-6z'/%3E%3C!-- รางเหล็กบน --%3E%3Cpath fill='%232c3e50' d='M0 2h40v3H0z'/%3E%3C!-- รางเหล็กล่าง --%3E%3Cpath fill='%232c3e50' d='M0 8h40v3H0z'/%3E%3C/svg%3E");
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            text-align: center;
+            padding: 50px 20px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+        }
+
+        h1 {
+            color: var(--primary);
+            margin-bottom: 10px;
+        }
+
+        .controls {
+            margin: 20px 0;
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        input[type="text"] {
+            padding: 10px 15px;
+            font-size: 16px;
+            border: 2px solid #ccc;
+            border-radius: 8px;
+            width: 250px;
+            outline: none;
+        }
+
+        input[type="text"]:focus {
+            border-color: var(--secondary);
+        }
+
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: 0.3s;
+            color: white;
+            font-weight: bold;
+        }
+
+        .btn-first { background-color: #27ae60; }
+        .btn-first:hover { background-color: #2ecc71; }
+
+        .btn-front { background-color: #3498db; }
+        .btn-front:hover { background-color: #2980b9; }
+
+        .btn-last { background-color: #e67e22; }
+        .btn-last:hover { background-color: #d35400; }
+
+        .btn-clear { background-color: #e74c3c; }
+        .btn-clear:hover { background-color: #c0392b; }
+
+        .hidden { display: none !important; }
+
+        .output-section {
+            margin-top: 30px;
+            padding: 25px;
+            background-color: #ecf0f1;
+            border-radius: 8px;
+            min-height: 180px; 
+            overflow-x: auto; /* เพิ่มแถบเลื่อนแนวนอนถ้ารถไฟยาวเกินจอ */
+        }
+
+        .output-title {
+            margin-bottom: 25px;
+            font-weight: bold;
+            font-size: 20px;
+            color: #2c3e50;
+        }
+
+        .train-visual {
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
+            gap: 0; 
+            min-width: max-content; /* ให้คอนเทนเนอร์ขยายตามความยาวรถไฟ */
+            padding-top: 20px; 
+        }
+
+        .train-node {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-end; 
+            padding-bottom: 2px; 
+            background-image: var(--track-bg);
+            background-repeat: repeat-x;
+            background-position: bottom center;
+
+        }
+
+        .train-name {
+            margin-bottom: 8px;
+            background-color: var(--primary);
+            color: white;
+            padding: 4px 12px;
+            border-radius: 15px;
+            font-size: 13px;
+            font-weight: bold;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            max-width: 80px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .coupler-container {
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            padding-bottom: 2px; /* ปรับให้เท่ากับ .train-node */
+            background-image: var(--track-bg);
+            background-repeat: repeat-x;
+            background-position: bottom center;
+        }
+
+        .coupler-icon {
+            margin-bottom: 2px;
+            filter: drop-shadow(0 2px 3px rgba(0,0,0,0.2)); 
+        }
+
+        .null-node {
+            background-color: #95a5a6;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-weight: bold;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.1); 
+            margin-bottom: 15px; /* ปรับระดับให้ลอยสวยๆ */
+            margin-left: 5px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>🚂 โปรแกรมขบวนรถไฟ </h1>
+
+        <div class="controls">
+            <input type="text" id="carInput" placeholder="ตั้งชื่อโบกี้รถไฟ (เช่น Engine, Coach1)">
+            
+            <button id="btnFirst" class="btn-first" onclick="addFirst()">เพิ่มโบกี้แรก</button>
+            <button id="btnFront" class="btn-front hidden" onclick="addFront()">เพิ่มด้านหน้า</button>
+            <button id="btnLast" class="btn-last hidden" onclick="addLast()">เพิ่มด้านท้าย</button>
+            
+            <button class="btn-clear" onclick="clearTrain()">ล้างขบวน</button>
+        </div>
+
+            <div class="output-title">Output:</div>
+        <div class="output-section">
+            <div class="train-visual" id="visualOutput">
+                <div class="null-node">null</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const engineSVG = `
+            <svg viewBox="0 0 100 60" width="90" height="55">
+                <rect x="10" y="25" width="70" height="25" fill="#e67e22" rx="4"/>
+                <rect x="65" y="10" width="30" height="40" fill="#d35400" rx="4"/>
+                <rect x="72" y="15" width="16" height="14" fill="#ecf0f1" rx="2"/>
+                <path d="M 5 50 L 10 25 L 10 50 Z" fill="#7f8c8d"/>
+                <g fill="#2c3e50">
+                    <circle cx="25" cy="55" r="7" />
+                    <circle cx="50" cy="55" r="7" />
+                    <circle cx="75" cy="55" r="7" />
+                </g>
+            </svg>
+        `;
+
+        const coachSVG = `
+            <svg viewBox="0 0 100 60" width="90" height="55">
+                <rect x="5" y="15" width="90" height="35" fill="#3498db" rx="4"/>
+                <rect x="15" y="22" width="15" height="12" fill="#ecf0f1" rx="2"/>
+                <rect x="42" y="22" width="15" height="12" fill="#ecf0f1" rx="2"/>
+                <rect x="70" y="22" width="15" height="12" fill="#ecf0f1" rx="2"/>
+                <g fill="#2c3e50">
+                    <circle cx="25" cy="55" r="7" />
+                    <circle cx="75" cy="55" r="7" />
+                </g>
+            </svg>
+        `;
+
+        const couplerSVG = `
+            <div class="coupler-container">
+                <svg class="coupler-icon" width="30" height="20" viewBox="0 0 40 20">
+                    <rect x="0" y="6" width="15" height="8" rx="2" fill="var(--coupler-color-1)"/>
+                    <path d="M15 8 L22 8 C24 8 25 9 25 10 C25 11 24 12 22 12 L15 12 Z" fill="var(--coupler-color-1)"/>
+                    <path d="M25 8 L18 8 C16 8 15 9 15 10 C15 11 16 12 18 12 L25 12 Z" fill="var(--coupler-color-2)"/>
+                    <rect x="25" y="6" width="15" height="8" rx="2" fill="var(--coupler-color-2)"/>
+                    <circle cx="20" cy="10" r="2.5" fill="#cfd8dc"/>
+                </svg>
+            </div>
+        `;
+
+        class Node {
+            constructor(data) {
+                this.data = data;
+                this.next = null;
+            }
+        }
+
+        class TrainLinkedList {
+            constructor() {
+                this.head = null;
+            }
+
+            addFront(data) {
+                const newNode = new Node(data);
+                newNode.next = this.head;
+                this.head = newNode;
+                this.display();
+            }
+
+            addLast(data) {
+                const newNode = new Node(data);
+                if (this.head === null) {
+                    this.head = newNode;
+                } else {
+                    let current = this.head;
+                    while (current.next !== null) {
+                        current = current.next;
+                    }
+                    current.next = newNode;
+                }
+                this.display();
+            }
+
+            clear() {
+                this.head = null;
+                this.display();
+            }
+
+            display() {
+                let current = this.head;
+                let visualHTML = "";
+                let isFirstNode = true; 
+
+                while (current !== null) {
+                    let currentImage = isFirstNode ? engineSVG : coachSVG;
+
+                    visualHTML += `
+                        <div class="train-node">
+                            <div class="train-name">${current.data}</div>
+                            ${currentImage}
+                        </div>
+                    `;
+                    
+                    if (current.next !== null) {
+                        visualHTML += couplerSVG;
+                    }
+                    
+                    isFirstNode = false;
+                    current = current.next;
+                }
+
+                visualHTML += `<div class="null-node">null</div>`;
+                document.getElementById('visualOutput').innerHTML = visualHTML;
+                this.updateButtons();
+            }
+
+            updateButtons() {
+                const btnFirst = document.getElementById('btnFirst');
+                const btnFront = document.getElementById('btnFront');
+                const btnLast = document.getElementById('btnLast');
+
+                if (this.head === null) {
+                    btnFirst.classList.remove('hidden'); 
+                    btnFront.classList.add('hidden');    
+                    btnLast.classList.add('hidden');     
+                } else {
+                    btnFirst.classList.add('hidden');    
+                    btnFront.classList.remove('hidden'); 
+                    btnLast.classList.remove('hidden');  
+                }
+            }
+        }
+
+        const myTrain = new TrainLinkedList();
+
+        function getInputValue() {
+            const input = document.getElementById('carInput');
+            const value = input.value.trim();
+            input.value = ''; 
+            return value;
+        }
+
+        function addFirst() {
+            const data = getInputValue();
+            if (data) {
+                myTrain.addFront(data);
+            } else {
+                alert("กรุณาตั้งชื่อโบกี้รถไฟก่อนครับ!");
+            }
+        }
+
+        function addFront() {
+            const data = getInputValue();
+            if (data) {
+                myTrain.addFront(data);
+            } else {
+                alert("กรุณาตั้งชื่อโบกี้รถไฟก่อนครับ!");
+            }
+        }
+
+        function addLast() {
+            const data = getInputValue();
+            if (data) {
+                myTrain.addLast(data);
+            } else {
+                alert("กรุณาตั้งชื่อโบกี้รถไฟก่อนครับ!");
+            }
+        }
+
+        function clearTrain() {
+            myTrain.clear();
+        }
+    </script>
+</body>
+</html>
